@@ -4,6 +4,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+
 
 # status 400 ->bad request and 200->ok
 @csrf_exempt
@@ -41,13 +43,10 @@ def upload_file(request):
     tmp_dir = os.path.join(settings.BASE_DIR, 'tmp')
     os.makedirs(tmp_dir, exist_ok=True)
     
-    filename = f"{job_key}{file_extension}"
-    file_path = os.path.join(tmp_dir, filename)
-    
-    with open(file_path, 'wb+') as destination:
-        for chunk in uploaded_file.chunks():
-            destination.write(chunk)
-    
+    filename = f"{job_key}{file_extension}"    
+    fs = FileSystemStorage(location=tmp_dir)
+    saved_name = fs.save(filename, uploaded_file)
+    file_path = os.path.join(tmp_dir, saved_name)
     response = JsonResponse({
         'success': True,
         'jobKey': job_key
